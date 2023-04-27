@@ -1,0 +1,152 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import javax.swing.*;
+
+public class SnakeGame extends JPanel implements ActionListener, KeyListener {
+    private final int BOARD_WIDTH = 500;
+    private final int BOARD_HEIGHT = 500;
+    private final int DOT_SIZE = 10;
+    private final int RAND_POS = 25;
+    private final int DELAY = 160;
+
+    private ArrayList<Point> snake;
+    private Point food;
+    private Timer timer;
+    private boolean inGame;
+    private int score;
+    private String direction = "right";
+
+    public SnakeGame() {
+        initBoard();
+    }
+
+    private void initBoard() {
+        addKeyListener(this);
+        setBackground(Color.white);
+        setPreferredSize(new Dimension(BOARD_WIDTH, BOARD_HEIGHT));
+        setFocusable(true);
+        initGame();
+    }
+
+    private void initGame() {
+        snake = new ArrayList<>();
+        snake.add(new Point(50, 50));
+        snake.add(new Point(40, 50));
+        snake.add(new Point(30, 50));
+        food = new Point(200, 150);
+        timer = new Timer(DELAY, this);
+        timer.start();
+        inGame = true;
+        score = 0;
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphic) {
+        super.paintComponent(graphic);
+        drawSnake(graphic);
+        drawFood(graphic);
+        drawScore(graphic);
+    }
+
+    private void drawSnake(Graphics graphic) {
+        for (Point p : snake) {
+            graphic.setColor(Color.green);
+            graphic.fillRect(p.x, p.y, DOT_SIZE, DOT_SIZE);
+        }
+    }
+
+    private void drawFood(Graphics graphic) {
+        graphic.setColor(Color.red);
+        graphic.fillRect(food.x, food.y, DOT_SIZE, DOT_SIZE);
+    }
+
+    private void drawScore(Graphics graphic) {
+        graphic.setColor(Color.black);
+        graphic.drawString("Score: " + score, 10, 20);
+    }
+
+    private void move() {
+        for (int i = snake.size() - 1; i > 0; i--) {
+            snake.get(i).x = snake.get(i - 1).x;
+            snake.get(i).y = snake.get(i - 1).y;
+        }
+        switch (direction) {
+            case "up":
+                snake.get(0).y -= DOT_SIZE;
+                break;
+            case "down":
+                snake.get(0).y += DOT_SIZE;
+                break;
+            case "left":
+                snake.get(0).x -= DOT_SIZE;
+                break;
+            case "right":
+                snake.get(0).x += DOT_SIZE;
+                break;
+        }
+    }
+
+    private void checkCollision() {
+        if (snake.get(0).x < 0 || snake.get(0).x > BOARD_WIDTH - DOT_SIZE || 
+                snake.get(0).y < 0 || snake.get(0).y > BOARD_HEIGHT - DOT_SIZE) {
+            inGame = false;
+        }
+        for (int i = 1; i < snake.size(); i++) {
+            if (snake.get(0).x == snake.get(i).x && snake.get(0).y == snake.get(i).y) {
+                inGame = false;
+            }
+        }
+        if (snake.get(0).x == food.x && snake.get(0).y == food.y) {
+            snake.add(new Point(snake.get(snake.size() - 1).x, snake.get(snake.size() - 1).y));
+            score++;
+            createFood();
+        }
+    }
+
+    private void createFood() {
+        int x = (int) (Math.random() * RAND_POS) * DOT_SIZE;
+        int y = (int) (Math.random() * RAND_POS) * DOT_SIZE;
+        food = new Point(x, y);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (inGame) {
+            move();
+            checkCollision();
+        }
+        repaint();
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_LEFT && !direction.equals("right")) {
+            direction = "left";
+        } else if (key == KeyEvent.VK_RIGHT && !direction.equals("left")) {
+            direction = "right";
+        } else if (key == KeyEvent.VK_UP && !direction.equals("down")) {
+            direction = "up";
+        } else if (key == KeyEvent.VK_DOWN && !direction.equals("up")) {
+            direction = "down";
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Snake");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new SnakeGame());
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
